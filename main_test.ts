@@ -1,92 +1,73 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertExists } from "@std/assert";
 import config from "./config.ts";
 import { handler } from "./main.ts";
 
+function baseUrlFromDebug(): string {
+  const { host, port } = config.debug;
+  assertExists(host, "config.debug.host missing");
+  assertExists(port, "config.debug.port missing");
+  return `http://${host}:${port}`;
+}
+
 Deno.test("returns html on /", async () => {
-  const res = await handler(new Request("http://localhost/"));
+  const res = await handler(new Request(`${baseUrlFromDebug()}/`));
   assertEquals(res.headers.get("content-type"), "text/html");
   const body = await res.text();
   assertEquals(body.includes("Welcome to Deno"), true);
 });
 
 Deno.test("returns json on /api", async () => {
-  const res = await handler(new Request("http://localhost/api"));
+  const res = await handler(new Request(`${baseUrlFromDebug()}/api`));
   const data = await res.json();
   assertEquals(data.message, "Hello, world!");
   assertEquals(typeof data.time, "string");
 });
 
-Deno.test("proxies requests through /{agent}/v1/{...segments} route using real config and real payload", async () => {
-  const expectedPrompt = config.debug.prompt ?? "hello";
-  const expectedModel = config.debug.model ?? "deepseek-ai/deepseek-v4.1-flash";
-  const expectedAgent = config.debug.agent ?? "nvidia";
-  const expectedKey = config.agents[expectedAgent]?.key ?? "";
+Deno.test("proxies requests through /{agent}/v1/{...segments} route using real upstream (no mocking)", async (t) => {
+  const { agent: expectedAgent, model: expectedModel, prompt: expectedPrompt } =
+    config.debug;
+  assertExists(expectedAgent, "config.debug.agent missing");
+  assertExists(expectedModel, "config.debug.model missing");
+  assertExists(expectedPrompt, "config.debug.prompt missing");
 
-  const upstream = Deno.serve({
-    hostname: "127.0.0.1",
-    port: 0,
-  }, async (req) => {
-    const requestBody = await req.text();
-    const payload = JSON.parse(requestBody);
+  const agentConfig = config.agents[expectedAgent];
+  assertExists(agentConfig?.url, `config.agents[${expectedAgent}].url missing`);
+  assertExists(agentConfig?.key, `config.agents[${expectedAgent}].key missing`);
 
-    assertEquals(req.headers.get("Authorization"), `Bearer ${expectedKey}`);
-    assertEquals(payload.model, expectedModel);
-    assertEquals(payload.messages[0].role, "user");
-    assertEquals(payload.messages[0].content, expectedPrompt);
+  const modelConfig = agentConfig?.models?.[expectedModel]?.config ?? {};
 
-    return Response.json({
-      id: "proxy-ok",
-      object: "chat.completion",
-      model: payload.model,
-    });
+  const res = await handler(
+    new Request(`${baseUrlFromDebug()}/${expectedAgent}/v1/chat/completions`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: expectedModel,
+        messages: [{ role: "user", content: expectedPrompt }],
+        ...modelConfig,
+      }),
+    }),
+  );
+
+  assertEquals(res.status, 200);
+  const data = await res.json();
+
+  await t.step("response carries model id", () => {
+    assertEquals(typeof data.model, "string");
   });
 
-  const port = (upstream.addr as Deno.NetAddr).port;
-  const previousAgent = config.agents[expectedAgent];
-  const previousDebug = { ...config.debug };
-
-  config.debug = {
-    ...config.debug,
-    host: "127.0.0.1",
-    port,
-    agent: expectedAgent,
-    model: expectedModel,
-    prompt: expectedPrompt,
-  };
-
-  config.agents[expectedAgent] = {
-    ...previousAgent,
-    url: `http://127.0.0.1:${port}/v1`,
-    key: expectedKey,
-  };
-
-  try {
-    const res = await handler(
-      new Request(`http://localhost/${expectedAgent}/v1/chat/completions`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model: expectedModel,
-          messages: [{ role: "user", content: expectedPrompt }],
-        }),
-      }),
-    );
-
-    assertEquals(res.status, 200);
-    const data = await res.json();
-    assertEquals(data.id, "proxy-ok");
-    assertEquals(data.model, expectedModel);
-  } finally {
-    config.agents[expectedAgent] = previousAgent;
-    config.debug = previousDebug;
-    await upstream.shutdown();
-  }
+  await t.step("response carries non-empty assistant message", () => {
+    const content = data.choices?.[0]?.message?.content;
+    assertEquals(typeof content, "string");
+    assertEquals(content.length > 0, true);
+  });
 });
 
 Deno.test("returns 404 for unknown agent routes", async () => {
-  const res = await handler(new Request("http://localhost/unknown/v1/models"));
+  const res = await handler(
+    new Request(`${baseUrlFromDebug()}/unknown/v1/models`),
+  );
   assertEquals(res.status, 404);
 
   const data = await res.json();

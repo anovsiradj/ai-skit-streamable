@@ -1,6 +1,7 @@
 {
   "tasks": {
-    "dev": "deno run --watch --allow-net main.ts"
+    "app": "deno run --allow-net --allow-read --allow-env main.ts",
+    "cli": "deno run --allow-net --allow-read --allow-env cli.ts"
   },
   "imports": {
     "@ai-sdk/openai-compatible": "npm:@ai-sdk/openai-compatible@^3.0.54",
