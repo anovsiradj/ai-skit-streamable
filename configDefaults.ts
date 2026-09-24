@@ -1,4 +1,4 @@
-import { TypeConfigAgent } from "./types"
+import { TypeConfigAgent } from "./types.ts"
 
 const agents: Record<string, TypeConfigAgent> = {
 	// source <https://build.nvidia.com/deepseek-ai/deepseek-v4.1-flash>
