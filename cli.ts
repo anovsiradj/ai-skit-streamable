@@ -8,9 +8,9 @@ import config from "./config.ts";
 const agent = config.debug.agent!;
 const model = config.debug.model!;
 const promptFromArgs = Deno.args.join(" ").trim();
-const prompt = promptFromArgs || config.debug.prompt || "hello";
+const prompt = promptFromArgs || config.debug.prompt;
 const host = config.debug.host ?? "localhost";
-const port = Number(config.debug.port ?? 8000);
+const port = Number(config.debug.port!);
 
 const agentConfig = config.agents[agent];
 if (!agentConfig?.url) {
