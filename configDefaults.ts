@@ -1,4 +1,4 @@
-import { TypeConfigAgent } from "./types.ts"
+import { TypeConfigAgent, TypeConfigDebug } from "./types.ts"
 
 const agents: Record<string, TypeConfigAgent> = {
 	// source <https://build.nvidia.com/deepseek-ai/deepseek-v4.1-flash>
@@ -16,7 +16,16 @@ const agents: Record<string, TypeConfigAgent> = {
 		},
 	}
 }
+const debug: TypeConfigDebug = {
+	agent: 'nvidia',
+	model: 'deepseek-ai/deepseek-v4.1-flash',
+	prompt: 'hello',
+
+	host: 'localhost',
+	port: 8080,
+}
 
 export default {
+	debug,
 	agents,
 }

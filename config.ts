@@ -1,6 +1,6 @@
 import configDefaults from "./configDefaults.ts"
 import configSecrets from "./configSecrets.ts"
-import { TypeConfigAgent } from "./types.ts"
+import { TypeConfigAgent, TypeConfigDebug } from "./types.ts"
 
 function mergeAgents(
 	defaults: Record<string, TypeConfigAgent> = {},
@@ -24,11 +24,27 @@ function mergeAgents(
 	return merged
 }
 
+function mergeDebug(
+	defaults: TypeConfigDebug = {},
+	secrets: TypeConfigDebug = {},
+): TypeConfigDebug {
+	return {
+		...defaults,
+		...secrets,
+	}
+}
+
 const agents = mergeAgents(
 	configDefaults.agents,
 	configSecrets.agents,
 )
 
+const debug = mergeDebug(
+	configDefaults.debug,
+	configSecrets.debug,
+)
+
 export default {
+	debug,
 	agents,
 }

@@ -1,4 +1,5 @@
 import { assertEquals } from "@std/assert";
+import config from "./config.ts";
 import { handler } from "./main.ts";
 
 Deno.test("returns html on /", async () => {
@@ -15,53 +16,72 @@ Deno.test("returns json on /api", async () => {
   assertEquals(typeof data.time, "string");
 });
 
-Deno.test("proxies requests through /{agent}/v1/{...segments} route", async () => {
-  const originalFetch = globalThis.fetch;
-  const calls: Array<{ url: string; method: string; authorization?: string; body?: string }> = [];
+Deno.test("proxies requests through /{agent}/v1/{...segments} route using real config and real payload", async () => {
+  const expectedPrompt = config.debug.prompt ?? "hello";
+  const expectedModel = config.debug.model ?? "deepseek-ai/deepseek-v4.1-flash";
+  const expectedAgent = config.debug.agent ?? "nvidia";
+  const expectedKey = config.agents[expectedAgent]?.key ?? "";
 
-  globalThis.fetch = async (input, init) => {
-    const url = String(input);
-    const headers = new Headers(init?.headers ?? {});
-    calls.push({
-      url,
-      method: String(init?.method ?? "GET"),
-      authorization: headers.get("Authorization") ?? undefined,
-      body: init?.body ? String(init.body) : undefined,
+  const upstream = Deno.serve({
+    hostname: "127.0.0.1",
+    port: 0,
+  }, async (req) => {
+    const requestBody = await req.text();
+    const payload = JSON.parse(requestBody);
+
+    assertEquals(req.headers.get("Authorization"), `Bearer ${expectedKey}`);
+    assertEquals(payload.model, expectedModel);
+    assertEquals(payload.messages[0].role, "user");
+    assertEquals(payload.messages[0].content, expectedPrompt);
+
+    return Response.json({
+      id: "proxy-ok",
+      object: "chat.completion",
+      model: payload.model,
     });
+  });
 
-    return new Response(
-      JSON.stringify({ id: "proxy-ok", object: "chat.completion" }),
-      {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      },
-    );
+  const port = (upstream.addr as Deno.NetAddr).port;
+  const previousAgent = config.agents[expectedAgent];
+  const previousDebug = { ...config.debug };
+
+  config.debug = {
+    ...config.debug,
+    host: "127.0.0.1",
+    port,
+    agent: expectedAgent,
+    model: expectedModel,
+    prompt: expectedPrompt,
+  };
+
+  config.agents[expectedAgent] = {
+    ...previousAgent,
+    url: `http://127.0.0.1:${port}/v1`,
+    key: expectedKey,
   };
 
   try {
     const res = await handler(
-      new Request("http://localhost/nvidia/v1/chat/completions", {
+      new Request(`http://localhost/${expectedAgent}/v1/chat/completions`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          model: "deepseek-ai/deepseek-v4.1-flash",
-          messages: [{ role: "user", content: "hi" }],
+          model: expectedModel,
+          messages: [{ role: "user", content: expectedPrompt }],
         }),
       }),
     );
 
     assertEquals(res.status, 200);
-    assertEquals(calls.length, 1);
-    assertEquals(calls[0].url, "https://integrate.api.nvidia.com/v1/chat/completions");
-    assertEquals(calls[0].method, "POST");
-    assertEquals(calls[0].authorization, "Bearer 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");
-
     const data = await res.json();
     assertEquals(data.id, "proxy-ok");
+    assertEquals(data.model, expectedModel);
   } finally {
-    globalThis.fetch = originalFetch;
+    config.agents[expectedAgent] = previousAgent;
+    config.debug = previousDebug;
+    await upstream.shutdown();
   }
 });
 
