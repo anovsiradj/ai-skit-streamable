@@ -19,7 +19,7 @@ SSoT config: `config.ts` = merge `configDefaults.ts` + `configSecrets.ts`.
 
 | Task  | Perintah                      | Fungsi                                                               |
 | ----- | ----------------------------- | -------------------------------------------------------------------- |
-| `app` | `deno task app`               | Jalankan local proxy di `debug.host:debug.port` (`main.ts`)          |
+| `app` | `deno task app`               | Jalankan local proxy di `debug.host:debug.port` (`app.ts`)           |
 | `cli` | `deno task cli -- "<prompt>"` | Debug + ngetes proxy via chat langsung (`cli.ts`, butuh `app` jalan) |
 
 ## Tutorial
@@ -78,13 +78,33 @@ Arahkan `baseURL` OpenAI-compatible client ke proxy, per agent:
   `model: deepseek-ai/deepseek-v4.1-flash`, `apiKey: apa-saja` (proxy yang
   mengganti dengan key asli).
 
-### 5. Test
+### 5. Shared config model (`modelsConfigs`)
+
+Key di `agents[<nama>].modelsConfigs` adalah string regexp yang dicocokkan
+ke nama model — cocok untuk keluarga model yang berbagi parameter
+(contoh: `"^(meta|poolside)/"`, `"^z-ai/"`). Resolusi via
+`resolveModelConfig()` di `config.ts`: base dari regexp yang cocok
+(urutan insert = prioritas) lalu ditimpa per-key oleh
+`models[<nama>].config` exact bila ada.
+
+Proxy otomatis mengisi parameter yang belum ada di payload client
+(`chat/completions`), jadi agent tool yang kirim payload minimal
+(cuma `model` + `messages`) tetap dapat default yang benar.
+
+### 6. Pencatatan chat (`is_save_chat`)
+
+`debug.is_save_chat` adalah toggle logging input/output. Untuk sekarang
+`saveChat()` di `chat.ts` masih placeholder (cuma `console.debug`
+metadata + request, tanpa isi response karena body upstream berupa
+stream). Rencana: persist ke sqlite.
+
+### 7. Test
 
 ```bash
 deno test --allow-net --allow-read --allow-env
 ```
 
-Catatan: test proxy (`main_test.ts`) tidak pakai mocking — langsung hit upstream
+Catatan: test proxy (`app_test.ts`) tidak pakai mocking — langsung hit upstream
 asli sesuai `config.debug`, jadi butuh network + key valid dan bisa agak lama
 (model non-stream berat).
 

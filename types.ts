@@ -1,10 +1,11 @@
 // deno-lint-ignore-file
 
 export interface TypeConfigDebug {
+  is_save_chat?: boolean;
+
   agent?: string;
   model?: string;
   prompt?: string;
-  catat?: boolean;
 
   host?: string;
   port?: any;
@@ -19,4 +20,5 @@ export interface TypeConfigAgent {
   url?: string;
   key?: string;
   models?: Record<string, TypeConfigModel>;
+  modelsConfigs?: Record<string, Record<string, any>>;
 }

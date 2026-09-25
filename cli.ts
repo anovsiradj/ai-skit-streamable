@@ -1,4 +1,4 @@
-import config from "./config.ts";
+import config, { resolveModelConfig } from "./config.ts";
 
 // cli untuk debug + ngetes local proxy secara langsung.
 // pakai SSoT dari config.debug + config.agents, jadi sasarannya generik:
@@ -18,7 +18,7 @@ if (!agentConfig?.url) {
   Deno.exit(1);
 }
 
-const modelConfig = agentConfig.models?.[model]?.config ?? {};
+const modelConfig = resolveModelConfig(agent, model);
 const proxyUrl = `http://${host}:${port}/${agent}/v1/chat/completions`;
 
 const payload = {

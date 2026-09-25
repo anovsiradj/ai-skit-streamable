@@ -1,4 +1,5 @@
-import config from "./config.ts";
+import config, { resolveModelConfig } from "./config.ts";
+import { saveChat } from "./chat.ts";
 
 function jsonError(message: string, status = 400): Response {
   return Response.json(
@@ -43,6 +44,35 @@ async function proxyRequest(
   const requestBody = ["GET", "HEAD"].includes(req.method)
     ? undefined
     : await req.text();
+
+  // Terapkan shared config (modelsConfigs regexp + models exact) untuk
+  // chat/completions: hanya mengisi key yang belum ada di payload client,
+  // supaya agent tool yang kirim payload minimal tetap dapat default
+  // (temperature, max_tokens, stream, ...). Body non-JSON diteruskan utuh.
+  let outboundBody = requestBody;
+  let requestModel: string | undefined;
+  if (
+    requestBody && !["GET", "HEAD"].includes(req.method) &&
+    /(^|\/)chat\/completions$/.test(normalizedRoute)
+  ) {
+    try {
+      const payload = JSON.parse(requestBody);
+      if (payload && typeof payload.model === "string") {
+        requestModel = payload.model;
+        const defaults = resolveModelConfig(agentName, payload.model);
+        let changed = false;
+        for (const [key, value] of Object.entries(defaults)) {
+          if (!(key in payload)) {
+            payload[key] = value;
+            changed = true;
+          }
+        }
+        if (changed) outboundBody = JSON.stringify(payload);
+      }
+    } catch {
+      // bukan JSON valid -> teruskan apa adanya
+    }
+  }
   const headers = new Headers();
   for (const [key, value] of req.headers.entries()) {
     const lowerKey = key.toLowerCase();
@@ -80,7 +110,7 @@ async function proxyRequest(
     const upstreamResponse = await fetch(upstreamUrl, {
       method: req.method,
       headers,
-      body: requestBody,
+      body: outboundBody,
     });
 
     console.log(
@@ -92,6 +122,16 @@ async function proxyRequest(
         durationMs: Date.now() - start,
       }),
     );
+
+    void saveChat({
+      timestamp: new Date().toISOString(),
+      agent: agentName,
+      model: requestModel,
+      route: normalizedRoute,
+      status: upstreamResponse.status,
+      durationMs: Date.now() - start,
+      requestText: requestBody,
+    });
 
     return new Response(upstreamResponse.body, {
       status: upstreamResponse.status,
