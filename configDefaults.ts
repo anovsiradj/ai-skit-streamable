@@ -5,12 +5,12 @@ const agents: Record<string, TypeConfigAgent> = {
   nvidia: {
     url: "https://integrate.api.nvidia.com/v1",
     modelsConfigs: {
-		"^(meta|poolside)/": {
-          temperature: 1,
-          top_p: 0.95,
-          max_tokens: 8192,
-          stream: false,
-		},
+      "^(meta|poolside)\/": {
+        temperature: 1,
+        top_p: 0.95,
+        max_tokens: 8192,
+        stream: false,
+      },
       "^z\-ai\/": {
         temperature: 0.5,
         top_p: 1,
