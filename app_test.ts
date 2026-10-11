@@ -33,7 +33,7 @@ const netAccess = await Deno.permissions.query({
 
 Deno.test({
   name:
-    "proxies requests through /{agent}/v1/{...segments} route using real upstream (no mocking)",
+    "proxies requests through /{agent}/{...segments} route using real upstream (no mocking)",
   ignore: netAccess.state !== "granted",
   fn: async (t) => {
     const {
@@ -59,7 +59,7 @@ Deno.test({
 
     const res = await handler(
       new Request(
-        `${baseUrlFromDebug()}/${expectedAgent}/v1/chat/completions`,
+        `${baseUrlFromDebug()}/${expectedAgent}/chat/completions`,
         {
           method: "POST",
           headers: {
@@ -96,7 +96,7 @@ Deno.test({
 
 Deno.test("returns 404 for unknown agent routes", async () => {
   const res = await handler(
-    new Request(`${baseUrlFromDebug()}/unknown/v1/models`),
+    new Request(`${baseUrlFromDebug()}/unknown/models`),
   );
   assertEquals(res.status, 404);
 

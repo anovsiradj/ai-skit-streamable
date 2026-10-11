@@ -1,67 +1,75 @@
-import config, { resolveModelConfig } from "./config.ts";
+// Facade CLI modular: parse argumen sekali, lalu teruskan ke modul yang
+// dipilih. Menambah modul = tambah satu file di `cli/modules/` + daftarkan
+// di `modules` di bawah, tanpa sentuh parser maupun modul lain.
+//
+// Cara lama `deno task cli -- "halo"` tetap jalan: tanpa nama modul,
+// positional dianggap pesan untuk modul `chat` (backward compatible).
+// Nama modul ber-namespace yang tidak dikenal (`foo:bar`) dianggap salah
+// ketik, dan akan ditolak.
 
-// cli untuk debug + ngetes local proxy secara langsung.
-// pakai SSoT dari config.debug + config.agents, jadi sasarannya generik:
-// opencode, dsh (deepseek-harness), codex, copilot, agent tool lainnya.
-// contoh: deno task cli -- "halo, siapa kamu?"
+import { CliError } from "./cli/core.ts";
+import { chatModule } from "./cli/modules/chat.ts";
+import { modelInfoModule, modelListModule } from "./cli/modules/model.ts";
+import { parseArgs } from "./cli/parse.ts";
+import type { TypeCliModule } from "./cli/types.ts";
 
-const agent = config.debug.agent!;
-const model = config.debug.model!;
-const promptFromArgs = Deno.args.join(" ").trim();
-const prompt = promptFromArgs || config.debug.prompt;
-const host = config.debug.host ?? "localhost";
-const port = Number(config.debug.port!);
+const modules: TypeCliModule[] = [
+  chatModule,
+  modelListModule,
+  modelInfoModule,
+];
 
-const agentConfig = config.agents[agent];
-if (!agentConfig?.url) {
-  console.error(`[cli] unknown agent or missing url: ${agent}`);
+function printModules(): void {
+  console.log("cli untuk proxy streamable.\n");
+  console.log("modul:");
+  for (const mod of modules) {
+    console.log(`  ${mod.name.padEnd(12)} ${mod.summary}`);
+  }
+  console.log("\nflag umum: --agent <nama>  --model <nama>");
+  console.log("default agent/model diambil dari config.debug.*");
+  console.log("\nproxy harus jalan dulu: deno task app");
+}
+
+function printModule(mod: TypeCliModule): void {
+  console.log(`${mod.name} - ${mod.summary}`);
+  console.log(`usage: ${mod.usage}`);
+}
+
+const args = parseArgs(Deno.args);
+
+if (args.help || args.positionals[0] === "help") {
+  printModules();
+  Deno.exit(0);
+}
+
+const requested = args.positionals[0];
+const selected = requested
+  ? modules.find((mod) => mod.name === requested)
+  : undefined;
+
+if (requested && !selected && requested.includes(":")) {
+  console.error(`[cli] unknown module: ${requested}\n`);
+  printModules();
   Deno.exit(1);
 }
 
-const modelConfig = resolveModelConfig(agent, model);
-const proxyUrl = `http://${host}:${port}/${agent}/v1/chat/completions`;
-
-const payload = {
-  model,
-  messages: [{ role: "user", content: prompt }],
-  ...modelConfig,
+const active = selected ?? chatModule;
+const context = {
+  args: {
+    ...args,
+    positionals: selected ? args.positionals.slice(1) : args.positionals,
+  },
 };
 
-console.log(`[cli] POST ${proxyUrl}`);
-console.log(`[cli] model=${model} prompt=${JSON.stringify(prompt)}`);
-
-let res: Response;
 try {
-  res = await fetch(proxyUrl, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  const code = await active.run(context);
+  Deno.exit(typeof code === "number" ? code : 0);
 } catch (error) {
-  console.error(
-    `[cli] proxy tidak jalan di ${host}:${port}? jalankan dulu: deno task app`,
-    error instanceof Error ? error.message : String(error),
-  );
+  if (error instanceof CliError) {
+    console.error(`[cli] ${error.message}`);
+    console.error(`[cli] usage: ${active.usage}`);
+  } else {
+    console.error(`[cli] error:`, error);
+  }
   Deno.exit(1);
-}
-
-console.log(`[cli] status=${res.status}`);
-
-const text = await res.text();
-if (!res.ok) {
-  console.error(`[cli] error body: ${text}`);
-  Deno.exit(1);
-}
-
-try {
-  const data = JSON.parse(text);
-  const content = data.choices?.[0]?.message?.content ??
-    data.choices?.[0]?.delta?.content ??
-    JSON.stringify(data, null, 2);
-  console.log(`[cli] --- reply ---`);
-  console.log(
-    typeof content === "string" ? content : JSON.stringify(content, null, 2),
-  );
-} catch {
-  console.log(text);
 }

@@ -52,13 +52,29 @@ const debug = mergeDebug(
 // regexp yang dicocokkan terhadap nama model (urutan insert = prioritas,
 // yang cocok belakangan menimpa yang cocok duluan). Config exact di
 // `models[nama].config` selalu menang per-key di atas hasil regexp.
-export function resolveModelConfig(
+//
+// Ini adalah SSoT untuk logika match regexp + merge; `resolveModelConfig()`
+// hanya menampilkannya sebagai Record (untuk payload proxy).
+
+export interface ModelConfigDetail {
+  // model terdaftar di `agents[<agent>].models`?
+  listed: boolean;
+  // regexp modelsConfigs yang cocok, berurutan
+  patterns: string[];
+  // hasil merge (regexp base -> exact override)
+  config: Record<string, unknown>;
+}
+
+export function describeModelConfig(
   agentName: string,
   modelName: string,
-): Record<string, unknown> {
+): ModelConfigDetail {
   const agentConfig = agents[agentName];
-  if (!agentConfig) return {};
+  if (!agentConfig) {
+    return { listed: false, patterns: [], config: {} };
+  }
 
+  const patterns: string[] = [];
   let base: Record<string, unknown> = {};
   for (
     const [pattern, cfg] of Object.entries(agentConfig.modelsConfigs ?? {})
@@ -70,12 +86,24 @@ export function resolveModelConfig(
       continue; // pattern invalid -> skip, jangan crash proxy
     }
     if (re.test(modelName)) {
+      patterns.push(pattern);
       base = { ...base, ...(cfg ?? {}) };
     }
   }
 
   const exact = agentConfig.models?.[modelName]?.config ?? {};
-  return { ...base, ...exact };
+  return {
+    listed: agentConfig.models?.[modelName] !== undefined,
+    patterns,
+    config: { ...base, ...exact },
+  };
+}
+
+export function resolveModelConfig(
+  agentName: string,
+  modelName: string,
+): Record<string, unknown> {
+  return describeModelConfig(agentName, modelName).config;
 }
 
 export default {

@@ -169,13 +169,14 @@ export async function handler(req: Request): Promise<Response> {
     });
   }
 
-  const match = url.pathname.match(/^\/([^/]+)\/v1(?:\/(.*))?$/);
-  if (!match) {
+  // Route contract: `/{agent}/{...segments}` — tanpa `/v1`, karena base URL
+  // upstream sudah membawa prefix-nya sendiri (SSoT: config.agents[agent].url).
+  const [agentName = "", ...segments] = url.pathname.split("/").filter(Boolean);
+  if (!agentName) {
     return jsonError("Not found", 404);
   }
 
-  const [, agentName, route = ""] = match;
-  return await proxyRequest(req, agentName, route);
+  return await proxyRequest(req, agentName, segments.join("/"));
 }
 
 if (import.meta.main) {
