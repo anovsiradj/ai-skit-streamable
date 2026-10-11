@@ -1,7 +1,7 @@
 import { TypeConfigAgent, TypeConfigDebug } from "./types.ts";
 
 const agents: Record<string, TypeConfigAgent> = {
-  // source <https://build.nvidia.com/deepseek-ai/deepseek-v4.1-flash>
+  // https://build.nvidia.com/models?filters=nimType%3Anim_type_preview
   nvidia: {
     url: "https://integrate.api.nvidia.com/v1",
     modelsConfigs: {
@@ -10,6 +10,14 @@ const agents: Record<string, TypeConfigAgent> = {
         top_p: 0.95,
         max_tokens: 8192,
         stream: false,
+      },
+      "vision\-instruct$": {
+        "frequency_penalty": 0,
+        "max_tokens": 512,
+        "presence_penalty": 0,
+        "stream": false,
+        "temperature": 1,
+        "top_p": 1,
       },
       "^z\-ai\/": {
         temperature: 0.5,
@@ -27,9 +35,20 @@ const agents: Record<string, TypeConfigAgent> = {
           stream: false,
         },
       },
+      "moonshotai/kimi-k3": {
+        config: {
+          "max_tokens": 16384,
+          "seed": 0,
+          "stream": false,
+          "temperature": 1,
+          "reasoning_effort": "max",
+        },
+      },
       "z-ai/glm-5.3": {},
       "z-ai/glm-5.3-flash": {},
       "meta/muse-glimmer-30b": {},
+      "meta/llama-3.2-11b-vision-instruct": {},
+      "meta/llama-3.2-90b-vision-instruct": {},
       "poolside/laguna-xs-2.1": {},
       "openai/gpt-oss-20b": {
         config: {
@@ -47,6 +66,15 @@ const agents: Record<string, TypeConfigAgent> = {
           stream: false,
         },
       },
+      "nvidia/nemotron-3-super-120b-a12b": {
+        config: {
+          temperature: 0.5,
+          top_p: 1,
+          max_tokens: 1024,
+          stream: false,
+        },
+      },
+      // models
     },
   },
 };

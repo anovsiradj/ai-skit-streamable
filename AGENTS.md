@@ -1,7 +1,7 @@
 # Development Guidelines
 
 ## JS & Runtime
-pakai deno sebagai runtime dan package_manager, jangan pakai node maupun npm.
+pakai deno sebagai runtime dan package_manager, jangan pakai node,npm/pnpm,etc.
 
 ## Terminologi
 - SSoT = Single Source of Truth
