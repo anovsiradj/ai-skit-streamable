@@ -58,14 +58,6 @@ const agents: Record<string, TypeConfigAgent> = {
           stream: false,
         },
       },
-      "mistralai/mistral-nemotron": {
-        config: {
-          temperature: 0.6,
-          top_p: 0.7,
-          max_tokens: 4096,
-          stream: false,
-        },
-      },
       "nvidia/nemotron-3-super-120b-a12b": {
         config: {
           temperature: 0.5,
