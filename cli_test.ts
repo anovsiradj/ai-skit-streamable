@@ -1,6 +1,6 @@
 import { assertEquals } from "@std/assert";
-import { parseArgs } from "./cli/parse.ts";
-import type { TypeCliArgs } from "./cli/types.ts";
+import { parseArgs } from "./src/cli/parse.ts";
+import type { TypeCliArgs } from "./src/cli/types.ts";
 
 const expect = (name: string, got: TypeCliArgs): void =>
   assertEquals(got, got satisfies TypeCliArgs, name);

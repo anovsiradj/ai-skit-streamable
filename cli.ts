@@ -7,11 +7,11 @@
 // Nama modul ber-namespace yang tidak dikenal (`foo:bar`) dianggap salah
 // ketik, dan akan ditolak.
 
-import { CliError } from "./cli/core.ts";
-import { chatModule } from "./cli/modules/chat.ts";
-import { modelInfoModule, modelListModule } from "./cli/modules/model.ts";
-import { parseArgs } from "./cli/parse.ts";
-import type { TypeCliModule } from "./cli/types.ts";
+import { CliError } from "./src/cli/core.ts";
+import { chatModule } from "./src/cli/modules/chat.ts";
+import { modelInfoModule, modelListModule } from "./src/cli/modules/model.ts";
+import { parseArgs } from "./src/cli/parse.ts";
+import type { TypeCliModule } from "./src/cli/types.ts";
 
 const modules: TypeCliModule[] = [
   chatModule,

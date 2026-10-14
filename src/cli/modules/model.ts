@@ -1,4 +1,4 @@
-import config, { describeModelConfig } from "../../config.ts";
+import config, { describeModelConfig } from "../../../config.ts";
 import {
   knownModels,
   printJson,

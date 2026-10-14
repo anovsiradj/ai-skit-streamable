@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "app": "deno run --allow-net --allow-read --allow-env app.ts",
+    "api": "deno run --allow-net --allow-read --allow-env api.ts",
     "cli": "deno run --allow-net --allow-read --allow-env cli.ts"
   },
   "imports": {
@@ -9,6 +9,7 @@
     "@std/cli": "jsr:@std/cli@^1.0.32",
     "ai": "npm:ai@^7.0.138",
     "axios": "npm:axios@^1.20.0",
-    "openai": "npm:openai@^7.32.0"
+    "openai": "npm:openai@^7.32.0",
+    "react": "npm:react@^19.3.0"
   }
 }

@@ -1,6 +1,6 @@
 import { assertEquals, assertExists } from "@std/assert";
 import config, { resolveModelConfig } from "./config.ts";
-import { handler } from "./app.ts";
+import { handler } from "./api.ts";
 
 function baseUrlFromDebug(): string {
   const { host, port } = config.debug;

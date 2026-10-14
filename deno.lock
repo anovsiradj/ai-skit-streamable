@@ -9,7 +9,8 @@
     "npm:@ai-sdk/openai-compatible@^3.0.68": "3.0.68_zod@4.6.7",
     "npm:ai@^7.0.138": "7.0.138_zod@4.6.7",
     "npm:axios@^1.20.0": "1.20.0",
-    "npm:openai@^7.32.0": "7.32.0_zod@4.6.7"
+    "npm:openai@^7.32.0": "7.32.0_zod@4.6.7",
+    "npm:react@^19.3.0": "19.3.0"
   },
   "jsr": {
     "@std/assert@1.0.19": {
@@ -253,6 +254,9 @@
     "proxy-from-env@2.1.0": {
       "integrity": "sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA=="
     },
+    "react@19.3.0": {
+      "integrity": "sha512-E8LUcbtBWt20bbl2YoHfx4ZDBdxVTfOKtCZn9cDSJ4l6/nuoApcpIBcj47t2wZoVX8g2ZHuMHbiShgCR1T5Sog=="
+    },
     "undici@7.30.0": {
       "integrity": "sha512-dkrQXeHSaoamnItlYbmzG0wFYrM0ZwDxCIg0A7aKjTyyhh9svRzCNFEzV+Vm05/yehjCzjDZ31KXfGEjYSztDQ=="
     },
@@ -267,7 +271,8 @@
       "npm:@ai-sdk/openai-compatible@^3.0.68",
       "npm:ai@^7.0.138",
       "npm:axios@^1.20.0",
-      "npm:openai@^7.32.0"
+      "npm:openai@^7.32.0",
+      "npm:react@^19.3.0"
     ]
   }
 }

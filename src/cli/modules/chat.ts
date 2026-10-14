@@ -1,4 +1,4 @@
-import { resolveModelConfig } from "../../config.ts";
+import { resolveModelConfig } from "../../../config.ts";
 import {
   promptFrom,
   proxyBase,

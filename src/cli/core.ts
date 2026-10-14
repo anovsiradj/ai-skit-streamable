@@ -4,7 +4,7 @@
 // Modus coupling: tinggi di dalam (semua modul ambil dari sini), longgar di
 // luar (modul hanya menerima ctx + memunculkan output).
 
-import config from "../config.ts";
+import config from "../../config.ts";
 
 export class CliError extends Error {}
 
