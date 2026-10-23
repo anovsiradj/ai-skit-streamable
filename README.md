@@ -11,17 +11,14 @@ SSoT config: `config.ts` = merge `configDefaults.ts` + `configSecrets.ts`.
 
 ## Task Deno
 
-| Task  | Perintah                      | Fungsi                                                               |
-| ----- | ----------------------------- | -------------------------------------------------------------------- |
-| `app` | `deno task app`               | Jalankan local proxy di `debug.host:debug.port` (`app.ts`)           |
-| `cli` | `deno task cli -- "<prompt>"` | Debug + ngetes proxy via chat langsung (`cli.ts`, butuh `app` jalan) |
+Lihat `deno.json` untuk daftar task yang tersedia.
 
 ## Tutorial
 
 ### 1. Jalankan proxy (terminal 1)
 
 ```bash
-deno task app
+deno task api
 # Listening on http://localhost:8080/
 ```
 

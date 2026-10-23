@@ -66,6 +66,17 @@ const agents: Record<string, TypeConfigAgent> = {
           stream: false,
         },
       },
+      "google/gemma-4-31b-it": {
+        config: {
+          "max_tokens": 1024,
+          "stream": false,
+          "temperature": 0.5,
+          "top_p": 1,
+          "frequency_penalty": 0,
+          "presence_penalty": 0,
+          "seed": 0,
+        },
+      },
       // models
     },
   },
